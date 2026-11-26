@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "SourceDoc": {
+      "title": "SourceDoc",
+      "description": "Metadata for a logistics master data source (TRP or VLI)",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "enum": ["TRP", "VLI"],
+          "description": "Key identifier of the source"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human readable label of the source",
+          "maxLength": 100
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "Whether this source is currently using the initial default dataset"
+        },
+        "chunkCount": {
+          "type": "number",
+          "description": "Total number of data chunk documents stored in the chunks subcollection"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of when the source was last updated",
+          "maxLength": 64
+        },
+        "meta": {
+          "type": "object",
+          "description": "Metadata about the uploaded Excel file"
+        },
+        "dqJson": {
+          "type": "string",
+          "description": "JSON serialized DataQualityRow[] summary",
+          "maxLength": 100000
+        }
+      },
+      "required": ["key", "label", "isDefault", "chunkCount"]
+    },
+    "SourceChunk": {
+      "title": "SourceChunk",
+      "description": "A partition chunk of customer orders for a source",
+      "type": "object",
+      "properties": {
+        "chunkIndex": {
+          "type": "number",
+          "description": "Zero-based index of this chunk"
+        },
+        "customerCount": {
+          "type": "number",
+          "description": "Number of customers in this chunk"
+        },
+        "jsonData": {
+          "type": "string",
+          "description": "JSON serialized customer orders map for this chunk",
+          "maxLength": 800000
+        }
+      },
+      "required": ["chunkIndex", "jsonData"]
+    }
+  },
+  "firestore": {
+    "/logistics_sources/{sourceKey}": {
+      "schema": "SourceDoc",
+      "description": "Stores master data source status and metadata"
+    },
+    "/logistics_sources/{sourceKey}/chunks/{chunkId}": {
+      "schema": "SourceChunk",
+      "description": "Stores chunked customer order records for the source"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "LogiFlow Revenue — Logistics Jakarta",
+  "description": "Dashboard interaktif pemantauan revenue, BOP, margin, umur tagihan unbilled, dan operasional Delivery Order Logistics Jakarta secara real-time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

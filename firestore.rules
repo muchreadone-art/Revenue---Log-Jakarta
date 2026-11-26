@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Startup connection validation
+    match /test/connection {
+      allow read: if true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSourceKey(key) {
+      return key in ['TRP', 'VLI'];
+    }
+
+    function isValidSourceDoc(data) {
+      return data.keys().hasAll(['key', 'label', 'isDefault', 'chunkCount'])
+        && data.keys().hasOnly(['key', 'label', 'isDefault', 'chunkCount', 'updatedAt', 'meta', 'dqJson'])
+        && isValidSourceKey(data.key)
+        && data.label is string && data.label.size() <= 100
+        && data.isDefault is bool
+        && data.chunkCount is number && data.chunkCount >= 0 && data.chunkCount <= 200
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64))
+        && (!('meta' in data) || data.meta == null || data.meta is map)
+        && (!('dqJson' in data) || data.dqJson == null || (data.dqJson is string && data.dqJson.size() <= 100000));
+    }
+
+    function isValidSourceChunk(data) {
+      return data.keys().hasAll(['chunkIndex', 'jsonData'])
+        && data.keys().hasOnly(['chunkIndex', 'customerCount', 'jsonData'])
+        && data.chunkIndex is number && data.chunkIndex >= 0 && data.chunkIndex <= 200
+        && (!('customerCount' in data) || (data.customerCount is number && data.customerCount >= 0))
+        && data.jsonData is string && data.jsonData.size() <= 900000;
+    }
+
+    match /logistics_sources/{sourceKey} {
+      allow read: if isValidId(sourceKey) && isValidSourceKey(sourceKey);
+      allow write: if isValidId(sourceKey) && isValidSourceKey(sourceKey) && isValidSourceDoc(request.resource.data);
+
+      match /chunks/{chunkId} {
+        allow read: if isValidId(sourceKey) && isValidId(chunkId);
+        allow write: if isValidId(sourceKey) && isValidId(chunkId) && isValidSourceChunk(request.resource.data);
+      }
+    }
+  }
+}
